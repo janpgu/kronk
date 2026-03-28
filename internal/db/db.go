@@ -258,6 +258,55 @@ func GetAllRuns(db *sql.DB, limit int) ([]*job.Run, error) {
 	return runs, rows.Err()
 }
 
+// RunWithName extends Run with the human-readable job name for display purposes.
+type RunWithName struct {
+	*job.Run
+	JobName string
+}
+
+// AttachJobName wraps a slice of runs with a single job name.
+func AttachJobName(runs []*job.Run, name string) []*RunWithName {
+	out := make([]*RunWithName, len(runs))
+	for i, r := range runs {
+		out[i] = &RunWithName{Run: r, JobName: name}
+	}
+	return out
+}
+
+// GetAllRunsWithNames returns recent runs across all jobs with their job names, newest first.
+func GetAllRunsWithNames(db *sql.DB, limit int) ([]*RunWithName, error) {
+	rows, err := db.Query(`
+		SELECT r.id, r.job_id, r.started_at, r.finished_at, r.exit_code, r.stdout, r.stderr, r.attempt,
+		       j.name
+		FROM runs r
+		JOIN jobs j ON j.id = r.job_id
+		ORDER BY r.started_at DESC
+		LIMIT ?`,
+		limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not query runs: %w", err)
+	}
+	defer rows.Close()
+
+	var runs []*RunWithName
+	for rows.Next() {
+		var r job.Run
+		var name string
+		err := rows.Scan(
+			&r.ID, &r.JobID,
+			&r.StartedAt, &r.FinishedAt,
+			&r.ExitCode, &r.Stdout, &r.Stderr,
+			&r.Attempt, &name,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not read run row: %w", err)
+		}
+		runs = append(runs, &RunWithName{Run: &r, JobName: name})
+	}
+	return runs, rows.Err()
+}
+
 // HasRunningInstance reports whether a job has an unfinished run in the database.
 // Used as a concurrency guard before starting a new execution.
 func HasRunningInstance(db *sql.DB, jobID int64) (bool, error) {

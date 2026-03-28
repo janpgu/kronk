@@ -6,8 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -17,7 +15,6 @@ const (
 	colorRed    = lipgloss.Color("#FF5F87")
 	colorYellow = lipgloss.Color("#FFFF87")
 	colorGrey   = lipgloss.Color("#626262")
-	colorWhite  = lipgloss.Color("#FFFFFF")
 )
 
 // Prefix symbols used in output lines.
@@ -36,10 +33,6 @@ var (
 	MutedStyle   = lipgloss.NewStyle().Foreground(colorGrey)
 	BoldStyle    = lipgloss.NewStyle().Bold(true)
 	HeaderStyle  = lipgloss.NewStyle().Foreground(colorGrey).Bold(true)
-
-	tableStyle = lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(colorGrey)
 )
 
 // PrintSuccess prints a green checkmark line.
@@ -59,47 +52,56 @@ func PrintWarn(msg string) {
 
 // RenderTable renders a styled table to a string.
 // headers is the list of column names; rows is the data.
-// widths sets the width of each column in characters.
+// widths sets the visible character width of each column.
+// Cell values must be plain strings — no ANSI codes inside cells.
 func RenderTable(headers []string, rows [][]string, widths []int) string {
-	cols := make([]table.Column, len(headers))
-	for i, h := range headers {
-		w := 20 // default width
+	colWidth := func(i int) int {
 		if i < len(widths) {
-			w = widths[i]
+			return widths[i]
 		}
-		cols[i] = table.Column{Title: h, Width: w}
+		return 20
 	}
 
-	tableRows := make([]table.Row, len(rows))
-	for i, r := range rows {
-		tableRows[i] = table.Row(r)
+	// totalWidth is the sum of all column widths plus 2-space gaps.
+	totalWidth := 0
+	for i := range headers {
+		totalWidth += colWidth(i) + 2
 	}
 
-	t := table.New(
-		table.WithColumns(cols),
-		table.WithRows(tableRows),
-		table.WithFocused(false),
-		table.WithHeight(len(rows)+1),
-	)
+	// buildLine uses fmt.Sprintf for reliable fixed-width layout.
+	// %-*s: left-align in a field of exactly w characters.
+	// Each line is padded to exactly totalWidth characters.
+	buildLine := func(cells []string) string {
+		var sb strings.Builder
+		for i, cell := range cells {
+			fmt.Fprintf(&sb, "%-*s  ", colWidth(i), cell)
+		}
+		line := sb.String()
+		// Pad or trim to exactly totalWidth so borders align.
+		if len(line) < totalWidth {
+			line += strings.Repeat(" ", totalWidth-len(line))
+		}
+		return line[:totalWidth]
+	}
 
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(colorGrey).
-		BorderBottom(true).
-		Foreground(colorGrey).
-		Bold(true)
-	s.Selected = s.Selected.
-		Foreground(colorWhite).
-		Background(lipgloss.Color("")).
-		Bold(false)
-	t.SetStyles(s)
+	headerLine := buildLine(headers)
+	border := strings.Repeat("─", totalWidth)
 
-	return tableStyle.Render(t.View())
+	var sb strings.Builder
+	sb.WriteString(MutedStyle.Render("┌"+border+"┐") + "\n")
+	sb.WriteString(" " + HeaderStyle.Render(headerLine) + "\n")
+	sb.WriteString(" " + MutedStyle.Render(border) + "\n")
+	for _, row := range rows {
+		sb.WriteString(" " + buildLine(row) + "\n")
+	}
+	sb.WriteString(MutedStyle.Render("└" + border + "┘"))
+	return sb.String()
 }
 
 // Truncate shortens a string to maxLen characters, adding "…" if trimmed.
 func Truncate(s string, maxLen int) string {
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\r", "")
 	s = strings.ReplaceAll(s, "\n", " ")
 	if len(s) <= maxLen {
 		return s
@@ -122,13 +124,3 @@ func StatusStyle(status string) string {
 		return status
 	}
 }
-
-// noopModel is a minimal Bubble Tea model used to initialise the table renderer.
-// The table component requires a tea.Program context to render correctly.
-type noopModel struct {
-	table table.Model
-}
-
-func (m noopModel) Init() tea.Cmd                           { return nil }
-func (m noopModel) Update(tea.Msg) (tea.Model, tea.Cmd)    { return m, nil }
-func (m noopModel) View() string                            { return m.table.View() }

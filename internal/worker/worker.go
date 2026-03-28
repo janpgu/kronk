@@ -8,6 +8,7 @@ import (
 	"math"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/janpgu/kronk/internal/db"
@@ -112,8 +113,9 @@ func runCommand(command string) (stdout, stderr string, exitCode int) {
 	cmd.Stderr = &stderrBuf
 
 	err := cmd.Run()
-	stdout = stdoutBuf.String()
-	stderr = stderrBuf.String()
+	// Normalise Windows line endings (\r\n → \n) so \r does not corrupt terminal output.
+	stdout = strings.ReplaceAll(stdoutBuf.String(), "\r\n", "\n")
+	stderr = strings.ReplaceAll(stderrBuf.String(), "\r\n", "\n")
 
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
