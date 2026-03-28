@@ -1,0 +1,39 @@
+# Binaries
+bin/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries and coverage
+*.test
+*.out
+coverage.html
+
+# Go workspace file (local developer preferences, not shared)
+go.work
+go.work.sum
+
+# Dependency vendor directory (we use modules instead)
+vendor/
+
+# Environment and secrets
+.env
+.env.*
+
+# Database files — never commit these
+*.db
+*.db-shm
+*.db-wal
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
