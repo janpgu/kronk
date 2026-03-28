@@ -5,7 +5,7 @@
 
 **Pull the lever.**
 
-![Pull the lever](https://media1.tenor.com/m/mcS-PaTlDawAAAAd/pull-the-lever-wrong-lever.gif)
+<img src="https://media1.tenor.com/m/mcS-PaTlDawAAAAd/pull-the-lever-wrong-lever.gif" width="360">
 
 [![CI](https://github.com/janpgu/kronk/actions/workflows/ci.yml/badge.svg)](https://github.com/janpgu/kronk/actions/workflows/ci.yml)
 ![Go](https://img.shields.io/badge/go-1.22+-00ADD8?style=flat&logo=go&logoColor=white)
