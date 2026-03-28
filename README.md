@@ -1,4 +1,7 @@
-<img src="logo.svg" alt="kronk" width="420"/>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="logo-dark.svg">
+  <img src="logo.svg" alt="kronk" width="420">
+</picture>
 
 **Pull the lever.**
 
