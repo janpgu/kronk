@@ -19,7 +19,21 @@ It's for people who need scheduled tasks on a machine they control — a home se
 
 ## Install
 
-**Download a binary** from the [releases page](https://github.com/janpgu/kronk/releases) and put it somewhere on your PATH.
+**Linux / macOS** — one line:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/janpgu/kronk/main/install.sh | sh
+```
+
+Installs the binary to `/usr/local/bin` and adds the crontab entry automatically.
+
+**Windows** — one line in PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/janpgu/kronk/main/install.ps1 | iex
+```
+
+Installs the binary to `~/bin`, adds it to PATH, and registers a Task Scheduler task that runs every minute — including on battery.
 
 **Or build from source:**
 
@@ -27,33 +41,9 @@ It's for people who need scheduled tasks on a machine they control — a home se
 go install github.com/janpgu/kronk@latest
 ```
 
+Then run `kronk doctor` to complete setup.
+
 Requires Go 1.22+. No C compiler needed — the SQLite driver is pure Go.
-
----
-
-## Setup
-
-kronk needs one entry in your system scheduler. After that, you never touch it again.
-
-**Linux / macOS:**
-
-```sh
-crontab -e
-```
-
-Add this line:
-
-```
-* * * * * /usr/local/bin/kronk tick
-```
-
-**Windows (PowerShell, run once):**
-
-```powershell
-schtasks /create /tn "kronk" /tr "C:\path\to\kronk.exe tick" /sc MINUTE /mo 1
-```
-
-Not sure of the right path? Run `kronk doctor` — it detects your OS and prints the exact command.
 
 ---
 

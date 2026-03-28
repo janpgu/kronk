@@ -79,27 +79,31 @@ func checkDBFile(dbPath string) {
 func printSetupInstructions(binary string) {
 	switch runtime.GOOS {
 	case "windows":
-		fmt.Println("  Run this command once in PowerShell to register kronk with Task Scheduler:")
+		fmt.Println("  The easiest way to set up kronk is with the install script:")
 		fmt.Println()
-		fmt.Printf("  schtasks /create /tn \"kronk\" /tr \"%s tick\" /sc MINUTE /mo 1\n", binary)
+		fmt.Println("  irm https://raw.githubusercontent.com/janpgu/kronk/main/install.ps1 | iex")
 		fmt.Println()
-		fmt.Println("  To remove it later:")
-		fmt.Println("  schtasks /delete /tn \"kronk\" /f")
+		fmt.Println("  Or manually register with Task Scheduler:")
+		fmt.Println()
+		fmt.Printf("  schtasks /create /tn \"kronk\" /tr \"wscript.exe //B %%USERPROFILE%%\\bin\\kronk-tick.vbs\" /sc MINUTE /mo 1\n")
 
 	case "darwin":
-		fmt.Println("  Add this line to your crontab (run: crontab -e):")
+		fmt.Println("  The easiest way to set up kronk is with the install script:")
+		fmt.Println()
+		fmt.Println("  curl -fsSL https://raw.githubusercontent.com/janpgu/kronk/main/install.sh | sh")
+		fmt.Println()
+		fmt.Println("  Or manually add to crontab (crontab -e):")
 		fmt.Println()
 		fmt.Printf("  * * * * * %s tick\n", binary)
-		fmt.Println()
-		fmt.Println("  Or use launchd for more reliability on macOS.")
-		fmt.Println("  Run 'kronk doctor' after setup to verify.")
 
-	default: // linux and others
-		fmt.Println("  Add this line to your crontab (run: crontab -e):")
+	default:
+		fmt.Println("  The easiest way to set up kronk is with the install script:")
+		fmt.Println()
+		fmt.Println("  curl -fsSL https://raw.githubusercontent.com/janpgu/kronk/main/install.sh | sh")
+		fmt.Println()
+		fmt.Println("  Or manually add to crontab (crontab -e):")
 		fmt.Println()
 		fmt.Printf("  * * * * * %s tick\n", binary)
-		fmt.Println()
-		fmt.Println("  Save and exit. Verify with: crontab -l")
 	}
 }
 
