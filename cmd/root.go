@@ -18,8 +18,10 @@ var cfg = &job.Config{}
 
 // rootCmd is the base command. Running `kronk` with no subcommand prints help.
 var rootCmd = &cobra.Command{
-	Use:   "kronk",
-	Short: "Pull the lever.",
+	Use:           "kronk",
+	Short:         "Pull the lever.",
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	Long: `kronk — a zero-infrastructure job queue and scheduler.
 
 All state lives in a single SQLite file. No Redis, no brokers, no daemons.
