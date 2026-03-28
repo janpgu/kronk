@@ -1,6 +1,12 @@
-BINARY  = kronk
 VERSION = $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 LDFLAGS = -ldflags "-X main.version=$(VERSION)"
+
+# Detect Windows and set the correct binary extension.
+ifeq ($(OS),Windows_NT)
+	BINARY = kronk.exe
+else
+	BINARY = kronk
+endif
 
 .PHONY: build build-all clean run
 
