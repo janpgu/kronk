@@ -1,0 +1,8 @@
+<svg width="420" height="120" viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(48 72) rotate(-28)">
+    <circle cx="0" cy="0" r="9" fill="#0F172A"/>
+    <rect x="-4.5" y="-48" width="9" height="44" rx="4.5" fill="#0F172A"/>
+    <rect x="-7.5" y="-64" width="15" height="20" rx="5" fill="#22C55E"/>
+  </g>
+  <text x="92" y="82" fill="#0F172A" font-family="Inter, system-ui, sans-serif" font-size="64" font-weight="800" letter-spacing="-3">kronk</text>
+</svg>
