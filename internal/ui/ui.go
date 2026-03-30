@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Colour palette.
+// Color palette.
 const (
 	colorGreen  = lipgloss.Color("#00FF87")
 	colorRed    = lipgloss.Color("#FF5F87")
@@ -109,7 +109,7 @@ func Truncate(s string, maxLen int) string {
 	return s[:maxLen-1] + "…"
 }
 
-// StatusStyle returns a coloured string for a job status value.
+// StatusStyle returns a colored string for a job status value.
 func StatusStyle(status string) string {
 	switch status {
 	case "active":

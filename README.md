@@ -16,7 +16,7 @@
 
 kronk is a job scheduler that runs on a single SQLite file. No Redis, no message broker, no always-on daemon. You add one line to crontab and kronk takes it from there: check what's due, run it, record the result, exit. kronk will pull the lever for you. The right one, this time. Probably.
 
-It's for people who need scheduled tasks on a machine they control like a home server, a VPS, a dev box and don't want to manage infrastructure to do it. If you've ever added five cron jobs and realised you have no idea which ones ran, what they output, or why one failed three weeks ago, kronk solves that.
+It's for people who need scheduled tasks on a machine they control like a home server, a VPS, a dev box and don't want to manage infrastructure to do it. If you've ever added five cron jobs and realized you have no idea which ones ran, what they output, or why one failed three weeks ago, kronk solves that.
 
 ---
 
@@ -76,8 +76,8 @@ kronk trigger backup
 | Command | Description |
 |---|---|
 | `kronk add <cmd> --name <n> --schedule <s>` | Add a new job |
-| `kronk show <name>` | Show all details for a single job |
 | `kronk status` | Show all jobs and their next run time |
+| `kronk show <name>` | Show all details for a single job |
 | `kronk history [--job <n>] [--limit 20]` | Show recent run history |
 | `kronk tick [--verbose]` | Run all due jobs (called by crontab) |
 | `kronk run` | Long-running mode: tick every 30 seconds |

@@ -110,7 +110,7 @@ var rules = []rule{
 
 // Parse converts a natural language schedule or raw cron expression into
 // a standard 5-field cron expression. Returns an error with examples if
-// the input is not recognised.
+// the input is not recognized.
 func Parse(raw string) (string, error) {
 	s := strings.TrimSpace(raw)
 
@@ -132,7 +132,7 @@ func Parse(raw string) (string, error) {
 	}
 
 	return "", fmt.Errorf(
-		"unrecognised schedule %q\n\nExamples:\n%s",
+		"unrecognized schedule %q\n\nExamples:\n%s",
 		s, exampleList(),
 	)
 }
