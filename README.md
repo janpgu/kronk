@@ -76,6 +76,7 @@ kronk trigger backup
 | Command | Description |
 |---|---|
 | `kronk add <cmd> --name <n> --schedule <s>` | Add a new job |
+| `kronk show <name>` | Show all details for a single job |
 | `kronk status` | Show all jobs and their next run time |
 | `kronk history [--job <n>] [--limit 20]` | Show recent run history |
 | `kronk tick [--verbose]` | Run all due jobs (called by crontab) |
