@@ -16,7 +16,7 @@
 
 kronk is a job scheduler that runs on a single SQLite file. No Redis, no message broker, no always-on daemon. You add one line to crontab and kronk takes it from there: check what's due, run it, record the result, exit. kronk will pull the lever for you. The right one, this time. Probably.
 
-It's for people who need scheduled tasks on a machine they control — a home server, a VPS, a dev box — and don't want to manage infrastructure to do it. If you've ever added five cron jobs and realised you have no idea which ones ran, what they output, or why one failed three weeks ago, kronk solves that.
+It's for people who need scheduled tasks on a machine they control like a home server, a VPS, a dev box and don't want to manage infrastructure to do it. If you've ever added five cron jobs and realised you have no idea which ones ran, what they output, or why one failed three weeks ago, kronk solves that.
 
 ---
 
@@ -46,7 +46,7 @@ go install github.com/janpgu/kronk@latest
 
 Then run `kronk doctor` to complete setup.
 
-Requires Go 1.22+. No C compiler needed — the SQLite driver is pure Go.
+Requires Go 1.22+. No C compiler needed as the SQLite driver is pure Go.
 
 ---
 
