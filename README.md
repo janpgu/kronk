@@ -87,6 +87,7 @@ kronk trigger backup
 | `kronk remove <name>` | Remove a job and its history |
 | `kronk edit` | Edit all jobs in $EDITOR |
 | `kronk doctor` | Print config and setup instructions |
+| `kronk version` | Print the kronk version |
 
 **Flags available on all commands:**
 
