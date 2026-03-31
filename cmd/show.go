@@ -35,24 +35,12 @@ func runShow(cmd *cobra.Command, args []string) error {
 
 	label := ui.MutedStyle.Render
 
-	var statusStr string
-	switch j.Status {
-	case "active":
-		statusStr = ui.SuccessStyle.Render(string(j.Status))
-	case "failed":
-		statusStr = ui.ErrorStyle.Render(string(j.Status))
-	case "running":
-		statusStr = ui.WarnStyle.Render(string(j.Status))
-	default:
-		statusStr = ui.MutedStyle.Render(string(j.Status))
-	}
-
 	fmt.Println()
 	fmt.Printf("  %s  %s\n", label("Name:    "), ui.BoldStyle.Render(j.Name))
 	fmt.Printf("  %s  %s\n", label("Command: "), j.Command)
 	fmt.Printf("  %s  %s\n", label("Schedule:"), j.ScheduleRaw)
 	fmt.Printf("  %s  %s\n", label("Cron:    "), j.ScheduleCron)
-	fmt.Printf("  %s  %s\n", label("Status:  "), statusStr)
+	fmt.Printf("  %s  %s\n", label("Status:  "), ui.StatusStyle(string(j.Status)))
 	fmt.Printf("  %s  %d\n", label("Retries: "), j.MaxRetries)
 
 	if j.NextRunAt != nil {
