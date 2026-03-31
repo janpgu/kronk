@@ -29,7 +29,8 @@ Add a single line to your crontab and kronk handles the rest.`,
 }
 
 // Execute is the entry point called by main.go.
-func Execute() {
+func Execute(version string) {
+	rootCmd.Version = version
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
