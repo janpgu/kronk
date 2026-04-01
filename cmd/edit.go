@@ -90,11 +90,14 @@ func runEdit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Validate all schedules before applying anything.
+	// Validate all schedules before applying anything, and cache results.
+	cronExprs := make(map[string]string, len(edited))
 	for _, e := range edited {
-		if _, err := scheduler.Parse(e.scheduleRaw); err != nil {
+		cronExpr, err := scheduler.Parse(e.scheduleRaw)
+		if err != nil {
 			return fmt.Errorf("invalid schedule for job %q: %w", e.name, err)
 		}
+		cronExprs[e.name] = cronExpr
 	}
 
 	// Build lookup maps for diffing.
@@ -155,7 +158,7 @@ func runEdit(cmd *cobra.Command, args []string) error {
 
 	// Apply changes.
 	for _, e := range toAdd {
-		cronExpr, _ := scheduler.Parse(e.scheduleRaw) // already validated above
+		cronExpr := cronExprs[e.name]
 		nextRun, err := scheduler.NextRun(cronExpr, time.Now())
 		if err != nil {
 			return err
@@ -175,7 +178,7 @@ func runEdit(cmd *cobra.Command, args []string) error {
 
 	for _, e := range toUpdate {
 		j := existing[e.name]
-		cronExpr, _ := scheduler.Parse(e.scheduleRaw)
+		cronExpr := cronExprs[e.name]
 		nextRun, err := scheduler.NextRun(cronExpr, time.Now())
 		if err != nil {
 			return err
