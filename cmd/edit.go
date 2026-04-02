@@ -172,7 +172,7 @@ func runEdit(cmd *cobra.Command, args []string) error {
 			NextRunAt:    &nextRun,
 		}
 		if _, err := db.AddJob(database, j); err != nil {
-			return fmt.Errorf("could not add job %q: %w", e.name, err)
+			return err
 		}
 	}
 
@@ -189,13 +189,13 @@ func runEdit(cmd *cobra.Command, args []string) error {
 		j.MaxRetries = e.retries
 		j.NextRunAt = &nextRun
 		if err := db.UpdateJob(database, j); err != nil {
-			return fmt.Errorf("could not update job %q: %w", e.name, err)
+			return err
 		}
 	}
 
 	for _, name := range toRemove {
 		if err := db.DeleteJob(database, name); err != nil {
-			return fmt.Errorf("could not remove job %q: %w", name, err)
+			return err
 		}
 	}
 
