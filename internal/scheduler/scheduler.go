@@ -159,9 +159,15 @@ func parseDayAtTime(m []string) (string, error) {
 // parseHourMin converts hour string, optional minute string, and am/pm into
 // 24-hour hour and minute integers.
 func parseHourMin(hourStr, minStr, ampm string) (hour, min int, err error) {
-	hour, _ = strconv.Atoi(hourStr)
+	hour, err = strconv.Atoi(hourStr)
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid hour %q", hourStr)
+	}
 	if minStr != "" {
-		min, _ = strconv.Atoi(minStr)
+		min, err = strconv.Atoi(minStr)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid minutes %q", minStr)
+		}
 	}
 
 	ampm = strings.ToLower(ampm)
