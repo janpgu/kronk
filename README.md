@@ -16,13 +16,13 @@
 
 kronk is a job scheduler that runs on a single SQLite file. No Redis, no message broker, no always-on daemon. You add one line to crontab and kronk takes it from there: check what's due, run it, record the result, exit. kronk will pull the lever for you. The right one, this time. Probably.
 
-It's for people who need scheduled tasks on a machine they control like a home server, a VPS, a dev box and don't want to manage infrastructure to do it. If you've ever added five cron jobs and realized you have no idea which ones ran, what they output, or why one failed three weeks ago, kronk solves that.
+It's for people who need scheduled tasks on a machine they control, like a home server, a VPS, a dev box, and don't want to manage infrastructure to do it. If you've ever added five cron jobs and realized you have no idea which ones ran, what they output, or why one failed three weeks ago, kronk solves that.
 
 ---
 
 ## Install
 
-**Linux / macOS** — one line:
+**Linux / macOS** (one line):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/janpgu/kronk/main/install.sh | sh
@@ -30,13 +30,13 @@ curl -fsSL https://raw.githubusercontent.com/janpgu/kronk/main/install.sh | sh
 
 Installs the binary to `/usr/local/bin` and adds the crontab entry automatically.
 
-**Windows** — one line in PowerShell:
+**Windows** (one line in PowerShell):
 
 ```powershell
 irm https://raw.githubusercontent.com/janpgu/kronk/main/install.ps1 | iex
 ```
 
-Installs the binary to `~/bin`, adds it to PATH, and registers a Task Scheduler task that runs every minute — including on battery.
+Installs the binary to `~/bin`, adds it to PATH, and registers a Task Scheduler task that runs every minute, including on battery.
 
 **Or build from source:**
 
@@ -94,7 +94,6 @@ kronk trigger backup
 | Flag | Description |
 |---|---|
 | `--db <path>` | Use a specific database file |
-| `--help` | Help for any command |
 
 The database path resolves in this order: `--db` flag → `KRONK_DB` environment variable → platform default (`~/.kronk/kronk.db` on Unix, `%APPDATA%\kronk\kronk.db` on Windows).
 
@@ -102,7 +101,7 @@ The database path resolves in this order: `--db` flag → `KRONK_DB` environment
 
 ## Schedules
 
-Natural language or raw cron — both work:
+Natural language or raw cron, both work:
 
 | Input | Cron |
 |---|---|
@@ -139,22 +138,22 @@ The architecture is a tick model. The OS wakes kronk once per minute; kronk chec
 
 This has a few consequences worth understanding:
 
-- **Crash recovery is free.** If the machine reboots mid-run, the next tick will see the job's `finished_at` is null, recognise it as a stale running instance, and skip it. No orphaned workers, no stuck queues.
-- **The scheduler has one-minute resolution by default.** If you need sub-minute jobs, run `kronk run` as a persistent process instead — it ticks every 30 seconds.
+- **Crash recovery is free.** If the machine reboots mid-run, the next tick will see the job's `finished_at` is null, recognize it as a stale running instance, and skip it. No orphaned workers, no stuck queues.
+- **The scheduler has one-minute resolution by default.** If you need sub-minute jobs, run `kronk run` as a persistent process instead (ticks every 30 seconds).
 - **Jobs are shell commands.** `kronk` runs them with `sh -c` on Unix and `cmd /C` on Windows. Any executable, script, or pipeline works. The job has no knowledge of kronk.
 - **Concurrency is opt-out.** If a job is still running when the next tick fires (e.g. a job that takes 90 seconds on a one-minute schedule), the second tick skips it rather than starting a second instance.
 
-All state — jobs, run history, stdout, stderr, exit codes — lives in a single SQLite file. You can inspect it directly with any SQLite client, back it up with `cp`, or move it to another machine by copying the file.
+All state (jobs, run history, stdout, stderr, exit codes) lives in a single SQLite file. You can inspect it directly with any SQLite client, back it up with `cp`, or move it to another machine by copying the file.
 
 ---
 
 ## Comparison
 
-**vs. cron** — cron has no run history, no retry logic, no way to see what a job output last Tuesday. kronk adds those things and keeps the same mental model.
+**vs. cron:** cron has no run history, no retry logic, no way to see what a job output last Tuesday. kronk adds those things and keeps the same mental model.
 
-**vs. APScheduler / Celery** — those are libraries for Python applications. You embed them in your code and manage a worker process. kronk is an external tool that runs any command; your scripts don't need to know it exists.
+**vs. APScheduler / Celery:** those are libraries for Python applications. You embed them in your code and manage a worker process. kronk is an external tool that runs any command; your scripts don't need to know it exists.
 
-**vs. a hosted scheduler (GitHub Actions cron, AWS EventBridge)** — valid choices if you're already in those ecosystems. kronk is for when you just have a machine and want things to run on it.
+**vs. a hosted scheduler (GitHub Actions cron, AWS EventBridge):** valid choices if you're already in those ecosystems. kronk is for when you just have a machine and want things to run on it.
 
 **Why not just use cron?** Cron is fine. kronk is cron with a history log, retry handling, a status view, and a slightly more forgiving schedule syntax. If you don't need any of that, cron is the right tool.
 
