@@ -161,4 +161,4 @@ All state (jobs, run history, stdout, stderr, exit codes) lives in a single SQLi
 
 ## Contributing
 
-Bug reports and pull requests are welcome. Run `go vet ./...` before submitting.
+Bug reports and pull requests are welcome. Open an issue first for anything beyond small fixes. Run `go vet ./...` and `go test ./...` before submitting.
