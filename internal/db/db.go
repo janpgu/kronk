@@ -346,16 +346,25 @@ func scanJob(s scanner) (*job.Job, error) {
 }
 
 // scanRun reads one row from the runs table into a Run struct.
+// stdout and stderr are scanned via nullable intermediates because they are
+// NULL for runs that have not yet completed.
 func scanRun(s scanner) (*job.Run, error) {
 	var r job.Run
+	var stdout, stderr *string
 	err := s.Scan(
 		&r.ID, &r.JobID,
 		&r.StartedAt, &r.FinishedAt,
-		&r.ExitCode, &r.Stdout, &r.Stderr,
+		&r.ExitCode, &stdout, &stderr,
 		&r.Attempt,
 	)
 	if err != nil {
 		return nil, err
+	}
+	if stdout != nil {
+		r.Stdout = *stdout
+	}
+	if stderr != nil {
+		r.Stderr = *stderr
 	}
 	return &r, nil
 }
