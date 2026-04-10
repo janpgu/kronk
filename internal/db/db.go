@@ -307,6 +307,20 @@ func GetAllRunsWithNames(db *sql.DB, limit int) ([]*RunWithName, error) {
 	return runs, rows.Err()
 }
 
+// PruneRuns deletes all run records that started before the given time.
+// Returns the number of rows deleted.
+func PruneRuns(db *sql.DB, before time.Time) (int64, error) {
+	result, err := db.Exec(`DELETE FROM runs WHERE started_at < ?`, before)
+	if err != nil {
+		return 0, fmt.Errorf("could not prune runs: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("could not count pruned runs: %w", err)
+	}
+	return n, nil
+}
+
 // HasRunningInstance reports whether a job has an unfinished run in the database.
 // Used as a concurrency guard before starting a new execution.
 func HasRunningInstance(db *sql.DB, jobID int64) (bool, error) {

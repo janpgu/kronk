@@ -85,6 +85,7 @@ kronk trigger backup
 | `kronk run` | Long-running mode: tick every 30 seconds |
 | `kronk trigger <name>` | Run a job immediately |
 | `kronk remove <name>` | Remove a job and its history |
+| `kronk prune [--days N]` | Delete run history older than N days (default 30) |
 | `kronk edit` | Edit all jobs in $EDITOR |
 | `kronk doctor` | Print config and setup instructions |
 | `kronk version` | Print the kronk version |

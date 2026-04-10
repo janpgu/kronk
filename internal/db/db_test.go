@@ -318,6 +318,44 @@ func TestGetRunsForJob(t *testing.T) {
 	}
 }
 
+func TestPruneRuns(t *testing.T) {
+	database := openTestDB(t)
+
+	jobID, err := AddJob(database, sampleJob("hello"))
+	if err != nil {
+		t.Fatalf("AddJob() unexpected error: %v", err)
+	}
+
+	old := time.Now().Add(-48 * time.Hour)
+	recent := time.Now().Add(-time.Minute)
+
+	// Add one old run and one recent run.
+	if _, err := AddRun(database, &job.Run{JobID: jobID, StartedAt: old, Attempt: 1}); err != nil {
+		t.Fatalf("AddRun(old) unexpected error: %v", err)
+	}
+	if _, err := AddRun(database, &job.Run{JobID: jobID, StartedAt: recent, Attempt: 2}); err != nil {
+		t.Fatalf("AddRun(recent) unexpected error: %v", err)
+	}
+
+	// Prune runs older than 1 day — should remove the old run only.
+	before := time.Now().Add(-24 * time.Hour)
+	n, err := PruneRuns(database, before)
+	if err != nil {
+		t.Fatalf("PruneRuns() unexpected error: %v", err)
+	}
+	if n != 1 {
+		t.Errorf("PruneRuns() = %d deleted, want 1", n)
+	}
+
+	runs, err := GetRunsForJob(database, jobID, 10)
+	if err != nil {
+		t.Fatalf("GetRunsForJob() unexpected error: %v", err)
+	}
+	if len(runs) != 1 {
+		t.Errorf("GetRunsForJob() after prune = %d runs, want 1", len(runs))
+	}
+}
+
 func TestDeleteJob_CascadesRuns(t *testing.T) {
 	database := openTestDB(t)
 
