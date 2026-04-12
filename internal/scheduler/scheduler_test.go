@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -92,6 +93,30 @@ func TestParse(t *testing.T) {
 
 			if got != tt.want {
 				t.Errorf("Parse(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParse_DidYouMean(t *testing.T) {
+	tests := []struct {
+		input      string
+		suggestion string
+	}{
+		{"every nigt", "every night"},
+		{"every minite", "every minute"},
+		{"every mourning", "every morning"},
+		{"every weakday", "every weekday"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			_, err := Parse(tt.input)
+			if err == nil {
+				t.Fatalf("Parse(%q) expected error, got nil", tt.input)
+			}
+			if !strings.Contains(err.Error(), tt.suggestion) {
+				t.Errorf("Parse(%q) error = %q, want suggestion %q", tt.input, err.Error(), tt.suggestion)
 			}
 		})
 	}

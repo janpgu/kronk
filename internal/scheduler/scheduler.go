@@ -11,12 +11,22 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+// example holds a representative input and its expected cron output, used in
+// error messages and did-you-mean suggestions.
+type example struct {
+	input string
+	cron  string
+}
+
 // rule maps a natural language pattern to a cron expression.
 // If cronExpr is empty, the handler function is called instead.
+// examples holds representative inputs shown in error messages and used for
+// did-you-mean matching — keeping all schedule knowledge in one place.
 type rule struct {
 	pattern  *regexp.Regexp
 	cronExpr string
 	handler  func(matches []string) (string, error)
+	examples []example
 }
 
 // rules is evaluated in order — more specific patterns must come before general ones.
@@ -25,6 +35,7 @@ var rules = []rule{
 	{
 		pattern:  regexp.MustCompile(`(?i)^every minute$`),
 		cronExpr: "* * * * *",
+		examples: []example{{"every minute", "* * * * *"}},
 	},
 	// "every 5 minutes", "every 30 minutes"
 	{
@@ -36,11 +47,13 @@ var rules = []rule{
 			}
 			return fmt.Sprintf("*/%d * * * *", n), nil
 		},
+		examples: []example{{"every 5 minutes", "*/5 * * * *"}},
 	},
 	// "every hour"
 	{
 		pattern:  regexp.MustCompile(`(?i)^every hour$`),
 		cronExpr: "0 * * * *",
+		examples: []example{{"every hour", "0 * * * *"}},
 	},
 	// "every 2 hours", "every 6 hours"
 	{
@@ -52,6 +65,7 @@ var rules = []rule{
 			}
 			return fmt.Sprintf("0 */%d * * *", n), nil
 		},
+		examples: []example{{"every 6 hours", "0 */6 * * *"}},
 	},
 	// "every day at 9am", "every day at 3pm", "every day at 9:30am"
 	{
@@ -63,21 +77,28 @@ var rules = []rule{
 			}
 			return fmt.Sprintf("%d %d * * *", min, hour), nil
 		},
+		examples: []example{
+			{"every day at 9am", "0 9 * * *"},
+			{"every day at 3:30pm", "30 15 * * *"},
+		},
 	},
 	// "every night" → 2am
 	{
 		pattern:  regexp.MustCompile(`(?i)^every night$`),
 		cronExpr: "0 2 * * *",
+		examples: []example{{"every night", "0 2 * * *"}},
 	},
 	// "every morning" → 7am
 	{
 		pattern:  regexp.MustCompile(`(?i)^every morning$`),
 		cronExpr: "0 7 * * *",
+		examples: []example{{"every morning", "0 7 * * *"}},
 	},
 	// "every monday at 9am" etc — must come before "every monday"
 	{
-		pattern: regexp.MustCompile(`(?i)^every (monday|tuesday|wednesday|thursday|friday|saturday|sunday) at (\d{1,2})(?::(\d{2}))?([ap]m)$`),
-		handler: parseDayAtTime,
+		pattern:  regexp.MustCompile(`(?i)^every (monday|tuesday|wednesday|thursday|friday|saturday|sunday) at (\d{1,2})(?::(\d{2}))?([ap]m)$`),
+		handler:  parseDayAtTime,
+		examples: []example{{"every monday at 9am", "0 9 * * 1"}},
 	},
 	// "every monday", "every friday"
 	{
@@ -85,26 +106,31 @@ var rules = []rule{
 		handler: func(m []string) (string, error) {
 			return fmt.Sprintf("0 9 * * %d", dayNumber(m[1])), nil
 		},
+		examples: []example{{"every monday", "0 9 * * 1"}},
 	},
 	// "every weekday" → Mon-Fri at 9am
 	{
 		pattern:  regexp.MustCompile(`(?i)^every weekday$`),
 		cronExpr: "0 9 * * 1-5",
+		examples: []example{{"every weekday", "0 9 * * 1-5"}},
 	},
 	// "every weekend" → Sat+Sun at 10am
 	{
 		pattern:  regexp.MustCompile(`(?i)^every weekend$`),
 		cronExpr: "0 10 * * 6,0",
+		examples: []example{{"every weekend", "0 10 * * 6,0"}},
 	},
 	// "twice a day" → 9am and 9pm
 	{
 		pattern:  regexp.MustCompile(`(?i)^twice a day$`),
 		cronExpr: "0 9,21 * * *",
+		examples: []example{{"twice a day", "0 9,21 * * *"}},
 	},
 	// "every day" → 9am daily
 	{
 		pattern:  regexp.MustCompile(`(?i)^every day$`),
 		cronExpr: "0 9 * * *",
+		examples: []example{{"every day", "0 9 * * *"}},
 	},
 }
 
@@ -131,10 +157,11 @@ func Parse(raw string) (string, error) {
 		return s, nil
 	}
 
-	return "", fmt.Errorf(
-		"unrecognized schedule %q\n\nExamples:\n%s",
-		s, exampleList(),
-	)
+	msg := fmt.Sprintf("unrecognized schedule %q", s)
+	if suggestion, ok := didYouMean(s); ok {
+		msg += fmt.Sprintf("\n\ndid you mean %q?", suggestion)
+	}
+	return "", fmt.Errorf("%s\n\nExamples:\n%s", msg, exampleList())
 }
 
 // NextRun returns the next time a cron expression fires after the given time.
@@ -207,22 +234,65 @@ func dayNumber(day string) int {
 	return 0
 }
 
-// exampleList returns a formatted list of example schedules for error messages.
-func exampleList() string {
-	examples := []string{
-		`  "every minute"          →  * * * * *`,
-		`  "every 5 minutes"       →  */5 * * * *`,
-		`  "every hour"            →  0 * * * *`,
-		`  "every day at 9am"      →  0 9 * * *`,
-		`  "every day at 3:30pm"   →  30 15 * * *`,
-		`  "every night"           →  0 2 * * *`,
-		`  "every morning"         →  0 7 * * *`,
-		`  "every monday"          →  0 9 * * 1`,
-		`  "every monday at 9am"   →  0 9 * * 1`,
-		`  "every weekday"         →  0 9 * * 1-5`,
-		`  "every weekend"         →  0 10 * * 6,0`,
-		`  "twice a day"           →  0 9,21 * * *`,
-		`  0 2 * * *               →  raw cron expression`,
+// didYouMean returns the closest rule example to s if it is within edit
+// distance 3, along with true. Returns ("", false) if nothing is close enough.
+// Candidates are derived from rule examples — the single source of truth for
+// all recognized schedule phrases.
+func didYouMean(s string) (string, bool) {
+	const maxDist = 3
+	best := ""
+	bestDist := maxDist + 1
+	lower := strings.ToLower(s)
+	for _, r := range rules {
+		for _, ex := range r.examples {
+			if d := levenshtein(lower, ex.input); d < bestDist {
+				bestDist = d
+				best = ex.input
+			}
+		}
 	}
-	return strings.Join(examples, "\n")
+	if bestDist <= maxDist {
+		return best, true
+	}
+	return "", false
+}
+
+// levenshtein computes the edit distance between two strings.
+func levenshtein(a, b string) int {
+	ra, rb := []rune(a), []rune(b)
+	la, lb := len(ra), len(rb)
+	row := make([]int, lb+1)
+	for j := range row {
+		row[j] = j
+	}
+	for i := 1; i <= la; i++ {
+		prev := i
+		for j := 1; j <= lb; j++ {
+			cost := 1
+			if ra[i-1] == rb[j-1] {
+				cost = 0
+			}
+			next := min(min(row[j]+1, prev+1), row[j-1]+cost)
+			row[j-1] = prev
+			prev = next
+		}
+		row[lb] = prev
+	}
+	return row[lb]
+}
+
+// exampleList returns a formatted list of example schedules for error messages.
+// Entries are derived from rule examples — adding a new rule automatically
+// includes it here.
+func exampleList() string {
+	const inputWidth = 24 // wide enough for the longest example input with quotes
+	var lines []string
+	for _, r := range rules {
+		for _, ex := range r.examples {
+			quoted := `"` + ex.input + `"`
+			lines = append(lines, fmt.Sprintf("  %-*s  →  %s", inputWidth, quoted, ex.cron))
+		}
+	}
+	lines = append(lines, fmt.Sprintf("  %-*s  →  raw cron expression", inputWidth, "0 2 * * *"))
+	return strings.Join(lines, "\n")
 }
