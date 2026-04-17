@@ -35,21 +35,7 @@ scoop bucket add kronk https://github.com/janpgu/scoop-kronk
 scoop install kronk
 ```
 
-Then run `kronk doctor` to complete setup.
-
-**Or via the install scripts:**
-
-Linux / macOS:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/janpgu/kronk/main/install.sh | sh
-```
-
-Windows (PowerShell):
-
-```powershell
-irm https://raw.githubusercontent.com/janpgu/kronk/main/install.ps1 | iex
-```
+Both automatically run `kronk setup` to register the system scheduler — no extra steps needed.
 
 **Or build from source:**
 
@@ -57,7 +43,7 @@ irm https://raw.githubusercontent.com/janpgu/kronk/main/install.ps1 | iex
 go install github.com/janpgu/kronk@latest
 ```
 
-Then run `kronk doctor` to complete setup.
+Then run `kronk setup` to register with the system scheduler.
 
 Requires Go 1.22+. No C compiler needed as the SQLite driver is pure Go.
 
@@ -100,6 +86,7 @@ kronk trigger backup
 | `kronk remove <name>` | Remove a job and its history |
 | `kronk prune [--days N]` | Delete run history older than N days (default 30) |
 | `kronk edit` | Edit all jobs in $EDITOR |
+| `kronk setup` | Register kronk with the system scheduler |
 | `kronk doctor` | Print config and setup instructions |
 | `kronk version` | Print the kronk version |
 

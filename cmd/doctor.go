@@ -77,32 +77,17 @@ func checkDBFile(dbPath string) {
 
 // printSetupInstructions prints the correct scheduler setup for the current OS.
 func printSetupInstructions(binary string) {
+	fmt.Println("  Run the following command to register kronk with your system scheduler:")
+	fmt.Println()
+	fmt.Printf("  %s setup\n", binary)
+	fmt.Println()
+
 	switch runtime.GOOS {
 	case "windows":
-		fmt.Println("  The easiest way to set up kronk is with the install script:")
-		fmt.Println()
-		fmt.Println("  irm https://raw.githubusercontent.com/janpgu/kronk/main/install.ps1 | iex")
-		fmt.Println()
-		fmt.Println("  Or manually register with Task Scheduler:")
-		fmt.Println()
-		fmt.Printf("  schtasks /create /tn \"kronk\" /tr \"wscript.exe //B %%USERPROFILE%%\\bin\\kronk-tick.vbs\" /sc MINUTE /mo 1\n")
-
-	case "darwin":
-		fmt.Println("  The easiest way to set up kronk is with the install script:")
-		fmt.Println()
-		fmt.Println("  curl -fsSL https://raw.githubusercontent.com/janpgu/kronk/main/install.sh | sh")
-		fmt.Println()
-		fmt.Println("  Or manually add to crontab (crontab -e):")
-		fmt.Println()
-		fmt.Printf("  * * * * * %s tick\n", binary)
-
+		fmt.Println("  This registers a Task Scheduler task that runs kronk every minute,")
+		fmt.Println("  including on battery.")
 	default:
-		fmt.Println("  The easiest way to set up kronk is with the install script:")
-		fmt.Println()
-		fmt.Println("  curl -fsSL https://raw.githubusercontent.com/janpgu/kronk/main/install.sh | sh")
-		fmt.Println()
-		fmt.Println("  Or manually add to crontab (crontab -e):")
-		fmt.Println()
+		fmt.Printf("  This adds the following crontab entry:\n")
 		fmt.Printf("  * * * * * %s tick\n", binary)
 	}
 }
