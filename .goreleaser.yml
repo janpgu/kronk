@@ -33,7 +33,6 @@ release:
   github:
     owner: janpgu
     name: kronk
-  generate_release_notes: true
 
 brews:
   - name: kronk
