@@ -87,7 +87,8 @@ func setupWindows(binary string) error {
 	ui.PrintSuccess(fmt.Sprintf("Silent launcher written: %s", vbsPath))
 
 	// Build the Task Scheduler XML definition.
-	taskXML := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-16"?>
+	// Note: no encoding declaration — schtasks accepts UTF-8 without it.
+	taskXML := fmt.Sprintf(`<?xml version="1.0"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
     <Description>kronk job scheduler tick</Description>
