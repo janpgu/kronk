@@ -46,7 +46,7 @@ brews:
     license: "MIT"
     install: |
       bin.install "kronk"
-      # TODO: add `system "#{bin}/kronk", "setup"` once kronk setup is implemented
+      system "#{bin}/kronk", "setup"
     test: |
       system "#{bin}/kronk", "version"
 
@@ -59,3 +59,5 @@ scoops:
     homepage: "https://github.com/janpgu/kronk"
     description: "Pull the lever. Zero-infrastructure job scheduler with history, retries, and natural language scheduling."
     license: "MIT"
+    post_install:
+      - "kronk setup"
