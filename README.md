@@ -22,21 +22,34 @@ It's for people who need scheduled tasks on a machine they control, like a home 
 
 ## Install
 
-**Linux / macOS** (one line):
+**macOS / Linux via Homebrew:**
+
+```sh
+brew install janpgu/kronk/kronk
+```
+
+**Windows via Scoop:**
+
+```powershell
+scoop bucket add kronk https://github.com/janpgu/scoop-kronk
+scoop install kronk
+```
+
+Then run `kronk doctor` to complete setup.
+
+**Or via the install scripts:**
+
+Linux / macOS:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/janpgu/kronk/main/install.sh | sh
 ```
 
-Installs the binary to `/usr/local/bin` and adds the crontab entry automatically.
-
-**Windows** (one line in PowerShell):
+Windows (PowerShell):
 
 ```powershell
 irm https://raw.githubusercontent.com/janpgu/kronk/main/install.ps1 | iex
 ```
-
-Installs the binary to `~/bin`, adds it to PATH, and registers a Task Scheduler task that runs every minute, including on battery.
 
 **Or build from source:**
 

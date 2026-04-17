@@ -46,6 +46,7 @@ brews:
     license: "MIT"
     install: |
       bin.install "kronk"
+      # TODO: add `system "#{bin}/kronk", "setup"` once kronk setup is implemented
     test: |
       system "#{bin}/kronk", "version"
 
