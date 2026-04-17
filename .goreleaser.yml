@@ -1,0 +1,60 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -X main.version={{.Version}}
+
+archives:
+  - formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  github:
+    owner: janpgu
+    name: kronk
+  generate_release_notes: true
+
+brews:
+  - name: kronk
+    repository:
+      owner: janpgu
+      name: homebrew-kronk
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://github.com/janpgu/kronk"
+    description: "Pull the lever. Zero-infrastructure job scheduler with history, retries, and natural language scheduling."
+    license: "MIT"
+    install: |
+      bin.install "kronk"
+    test: |
+      system "#{bin}/kronk", "version"
+
+scoops:
+  - name: kronk
+    repository:
+      owner: janpgu
+      name: scoop-kronk
+      token: "{{ .Env.SCOOP_BUCKET_TOKEN }}"
+    homepage: "https://github.com/janpgu/kronk"
+    description: "Pull the lever. Zero-infrastructure job scheduler with history, retries, and natural language scheduling."
+    license: "MIT"

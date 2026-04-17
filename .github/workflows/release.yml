@@ -6,8 +6,8 @@ on:
       - "v*"
 
 jobs:
-  build:
-    name: Build and release
+  release:
+    name: Release
     runs-on: ubuntu-latest
 
     permissions:
@@ -16,28 +16,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.22"
 
-      - name: Build binaries
-        run: |
-          VERSION=${GITHUB_REF_NAME}
-          LDFLAGS="-X main.version=${VERSION}"
-          mkdir -p dist
-          GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o dist/kronk-windows-amd64.exe .
-          GOOS=linux   GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o dist/kronk-linux-amd64 .
-          GOOS=darwin  GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o dist/kronk-darwin-arm64 .
-          GOOS=darwin  GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o dist/kronk-darwin-amd64 .
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
         with:
-          files: |
-            dist/kronk-windows-amd64.exe
-            dist/kronk-linux-amd64
-            dist/kronk-darwin-arm64
-            dist/kronk-darwin-amd64
-          generate_release_notes: true
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          SCOOP_BUCKET_TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
