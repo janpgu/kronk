@@ -114,8 +114,6 @@ func StatusStyle(status string) string {
 	switch status {
 	case "active":
 		return SuccessStyle.Render(status)
-	case "running":
-		return WarnStyle.Render(status)
 	case "failed":
 		return ErrorStyle.Render(status)
 	case "paused":

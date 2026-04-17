@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/janpgu/kronk/internal/db"
 	"github.com/janpgu/kronk/internal/job"
 	"github.com/spf13/cobra"
 )
@@ -44,7 +45,7 @@ func init() {
 		"path to the kronk database (overrides KRONK_DB env var)",
 	)
 
-	// Resolve the DB path before any subcommand runs.
+	// Resolve the DB path and run migrations before any subcommand runs.
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		if cfg.DBPath == "" {
 			cfg.DBPath = os.Getenv("KRONK_DB")
@@ -56,7 +57,19 @@ func init() {
 				return fmt.Errorf("could not determine database path: %w", err)
 			}
 		}
-		return nil
+
+		// Commands that don't touch the DB (version, doctor, setup) skip migration.
+		switch cmd.Name() {
+		case "version", "doctor", "setup":
+			return nil
+		}
+
+		database, err := db.Open(cfg.DBPath)
+		if err != nil {
+			return err
+		}
+		defer database.Close()
+		return db.Migrate(database)
 	}
 }
 

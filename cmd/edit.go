@@ -34,10 +34,6 @@ func runEdit(cmd *cobra.Command, args []string) error {
 	}
 	defer database.Close()
 
-	if err := db.Migrate(database); err != nil {
-		return err
-	}
-
 	jobs, err := db.GetAllJobs(database)
 	if err != nil {
 		return err
@@ -149,8 +145,12 @@ func runEdit(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Printf("\nRemove %d job(s) and their history? [y/N] ", len(toRemove))
 		reader := bufio.NewReader(os.Stdin)
-		response, _ := reader.ReadString('\n')
-		if strings.ToLower(strings.TrimSpace(response)) != "y" {
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("could not read response: %w", err)
+		}
+		response = strings.ToLower(strings.TrimSpace(response))
+		if response != "y" && response != "yes" {
 			fmt.Println("Aborted.")
 			return nil
 		}

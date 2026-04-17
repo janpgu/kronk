@@ -34,10 +34,6 @@ func runTickLogic(verbose bool) error {
 	}
 	defer database.Close()
 
-	if err := db.Migrate(database); err != nil {
-		return err
-	}
-
 	dueJobs, err := db.GetDueJobs(database)
 	if err != nil {
 		return err

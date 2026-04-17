@@ -50,16 +50,11 @@ func runAdd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not compute next run time: %w", err)
 	}
 
-	// Open DB and run migrations.
 	database, err := db.Open(cfg.DBPath)
 	if err != nil {
 		return err
 	}
 	defer database.Close()
-
-	if err := db.Migrate(database); err != nil {
-		return err
-	}
 
 	j := &job.Job{
 		Name:         addName,

@@ -14,10 +14,9 @@ type Config struct {
 type Status string
 
 const (
-	StatusActive  Status = "active"
-	StatusRunning Status = "running"
-	StatusFailed  Status = "failed"
-	StatusPaused  Status = "paused"
+	StatusActive Status = "active"
+	StatusFailed Status = "failed"
+	StatusPaused Status = "paused"
 )
 
 // Job represents a scheduled task stored in the jobs table.
