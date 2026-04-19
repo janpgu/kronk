@@ -58,3 +58,20 @@ func runRemove(cmd *cobra.Command, args []string) error {
 	ui.PrintSuccess(fmt.Sprintf("Job %q removed.", name))
 	return nil
 }
+
+// runRemoveConfirmed deletes a job and its run history without prompting.
+// Used by tests to bypass the interactive confirmation.
+func runRemoveConfirmed(name string) error {
+	database, err := db.Open(cfg.DBPath)
+	if err != nil {
+		return err
+	}
+	defer database.Close()
+
+	if err := db.DeleteJob(database, name); err != nil {
+		return err
+	}
+
+	ui.PrintSuccess(fmt.Sprintf("Job %q removed.", name))
+	return nil
+}
