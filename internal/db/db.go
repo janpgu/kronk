@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/janpgu/kronk/internal/job"
@@ -33,22 +34,25 @@ func Open(path string) (*sql.DB, error) {
 	return db, nil
 }
 
-// Migrate ensures all required tables exist. Safe to call on every startup —
-// CREATE TABLE IF NOT EXISTS is idempotent and never destroys existing data.
+// Migrate ensures all required tables and columns exist. Safe to call on every
+// startup — CREATE TABLE IF NOT EXISTS is idempotent. New columns are added via
+// ALTER TABLE, which is also safe to run repeatedly (errors for existing columns
+// are silently ignored).
 func Migrate(db *sql.DB) error {
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS jobs (
-			id            INTEGER PRIMARY KEY,
-			name          TEXT UNIQUE NOT NULL,
-			command       TEXT NOT NULL,
-			schedule_raw  TEXT NOT NULL,
-			schedule_cron TEXT NOT NULL,
-			max_retries   INTEGER DEFAULT 0,
-			status        TEXT DEFAULT 'active',
-			created_at    DATETIME,
-			updated_at    DATETIME,
-			last_run_at   DATETIME,
-			next_run_at   DATETIME
+			id               INTEGER PRIMARY KEY,
+			name             TEXT UNIQUE NOT NULL,
+			command          TEXT NOT NULL,
+			schedule_raw     TEXT NOT NULL,
+			schedule_cron    TEXT NOT NULL,
+			max_retries      INTEGER DEFAULT 0,
+			timeout_seconds  INTEGER DEFAULT 0,
+			status           TEXT DEFAULT 'active',
+			created_at       DATETIME,
+			updated_at       DATETIME,
+			last_run_at      DATETIME,
+			next_run_at      DATETIME
 		);
 
 		CREATE TABLE IF NOT EXISTS runs (
@@ -65,6 +69,15 @@ func Migrate(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("migration failed: %w", err)
 	}
+
+	// Add timeout_seconds to existing databases that predate this column.
+	// SQLite returns "duplicate column name" if it already exists — ignore that.
+	if _, err := db.Exec(`ALTER TABLE jobs ADD COLUMN timeout_seconds INTEGER DEFAULT 0`); err != nil {
+		if !strings.Contains(err.Error(), "duplicate column name") {
+			return fmt.Errorf("migration failed: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -72,9 +85,9 @@ func Migrate(db *sql.DB) error {
 func AddJob(db *sql.DB, j *job.Job) (int64, error) {
 	now := time.Now()
 	result, err := db.Exec(`
-		INSERT INTO jobs (name, command, schedule_raw, schedule_cron, max_retries, status, created_at, updated_at, next_run_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		j.Name, j.Command, j.ScheduleRaw, j.ScheduleCron, j.MaxRetries, job.StatusActive, now, now, j.NextRunAt,
+		INSERT INTO jobs (name, command, schedule_raw, schedule_cron, max_retries, timeout_seconds, status, created_at, updated_at, next_run_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		j.Name, j.Command, j.ScheduleRaw, j.ScheduleCron, j.MaxRetries, j.TimeoutSeconds, job.StatusActive, now, now, j.NextRunAt,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("could not add job %q: %w", j.Name, err)
@@ -143,16 +156,17 @@ func GetDueJobs(db *sql.DB) ([]*job.Job, error) {
 func UpdateJob(db *sql.DB, j *job.Job) error {
 	_, err := db.Exec(`
 		UPDATE jobs SET
-			command       = ?,
-			schedule_raw  = ?,
-			schedule_cron = ?,
-			max_retries   = ?,
-			status        = ?,
-			updated_at    = ?,
-			last_run_at   = ?,
-			next_run_at   = ?
+			command          = ?,
+			schedule_raw     = ?,
+			schedule_cron    = ?,
+			max_retries      = ?,
+			timeout_seconds  = ?,
+			status           = ?,
+			updated_at       = ?,
+			last_run_at      = ?,
+			next_run_at      = ?
 		WHERE id = ?`,
-		j.Command, j.ScheduleRaw, j.ScheduleCron, j.MaxRetries,
+		j.Command, j.ScheduleRaw, j.ScheduleCron, j.MaxRetries, j.TimeoutSeconds,
 		j.Status, time.Now(), j.LastRunAt, j.NextRunAt, j.ID,
 	)
 	if err != nil {
@@ -348,7 +362,7 @@ func scanJob(s scanner) (*job.Job, error) {
 	err := s.Scan(
 		&j.ID, &j.Name, &j.Command,
 		&j.ScheduleRaw, &j.ScheduleCron,
-		&j.MaxRetries, &status,
+		&j.MaxRetries, &j.TimeoutSeconds, &status,
 		&j.CreatedAt, &j.UpdatedAt,
 		&j.LastRunAt, &j.NextRunAt,
 	)

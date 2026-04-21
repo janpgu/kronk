@@ -87,6 +87,33 @@ func TestRunAdd(t *testing.T) {
 	}
 }
 
+func TestRunAdd_WithTimeout(t *testing.T) {
+	setupTestDB(t)
+
+	addName = "timed"
+	addSchedule = "every minute"
+	addRetries = 0
+	addTimeout = 30
+	if err := runAdd(nil, []string{"echo timed"}); err != nil {
+		t.Fatalf("runAdd() unexpected error: %v", err)
+	}
+	addTimeout = 0 // reset
+
+	database, err := db.Open(cfg.DBPath)
+	if err != nil {
+		t.Fatalf("db.Open() unexpected error: %v", err)
+	}
+	defer database.Close()
+
+	got, err := db.GetJob(database, "timed")
+	if err != nil {
+		t.Fatalf("db.GetJob() unexpected error: %v", err)
+	}
+	if got.TimeoutSeconds != 30 {
+		t.Errorf("runAdd() TimeoutSeconds = %d, want 30", got.TimeoutSeconds)
+	}
+}
+
 func TestRunAdd_InvalidSchedule(t *testing.T) {
 	setupTestDB(t)
 

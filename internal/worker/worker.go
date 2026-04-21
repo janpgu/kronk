@@ -3,6 +3,7 @@ package worker
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"fmt"
 	"math"
@@ -49,7 +50,7 @@ func Execute(database *sql.DB, j *job.Job, verbose bool) error {
 	}
 
 	// Execute the command as a subprocess.
-	stdout, stderr, exitCode := runCommand(j.Command)
+	stdout, stderr, exitCode := runCommand(j.Command, j.TimeoutSeconds)
 	now := time.Now()
 	run.FinishedAt = &now
 	run.ExitCode = &exitCode
@@ -99,14 +100,22 @@ func Execute(database *sql.DB, j *job.Job, verbose bool) error {
 
 // runCommand executes a shell command and returns stdout, stderr, and exit code.
 // Uses "sh -c" on Unix and "cmd /C" on Windows.
-func runCommand(command string) (stdout, stderr string, exitCode int) {
+// If timeoutSeconds > 0, the process is killed after that many seconds.
+func runCommand(command string, timeoutSeconds int) (stdout, stderr string, exitCode int) {
 	var stdoutBuf, stderrBuf bytes.Buffer
+
+	ctx := context.Background()
+	if timeoutSeconds > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(timeoutSeconds)*time.Second)
+		defer cancel()
+	}
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/C", command)
+		cmd = exec.CommandContext(ctx, "cmd", "/C", command)
 	} else {
-		cmd = exec.Command("sh", "-c", command)
+		cmd = exec.CommandContext(ctx, "sh", "-c", command)
 	}
 
 	cmd.Stdout = &stdoutBuf
@@ -118,6 +127,9 @@ func runCommand(command string) (stdout, stderr string, exitCode int) {
 	stderr = strings.ReplaceAll(stderrBuf.String(), "\r\n", "\n")
 
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return stdout, fmt.Sprintf("killed: exceeded timeout of %ds", timeoutSeconds), 1
+		}
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			return stdout, stderr, exitErr.ExitCode()
 		}

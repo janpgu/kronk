@@ -48,14 +48,15 @@ func runEdit(cmd *cobra.Command, args []string) error {
 	defer os.Remove(tmpPath)
 
 	fmt.Fprintln(tmpFile, "# kronk job editor")
-	fmt.Fprintln(tmpFile, "# Format: name | schedule | retries | command")
+	fmt.Fprintln(tmpFile, "# Format: name | schedule | retries | timeout | command")
 	fmt.Fprintln(tmpFile, "# - Edit existing lines to update jobs")
 	fmt.Fprintln(tmpFile, "# - Add new lines to create jobs")
 	fmt.Fprintln(tmpFile, "# - Delete lines to remove jobs (you will be prompted)")
 	fmt.Fprintln(tmpFile, "# - Lines starting with # are ignored")
+	fmt.Fprintln(tmpFile, "# - timeout is in seconds, 0 means no timeout")
 	fmt.Fprintln(tmpFile)
 	for _, j := range jobs {
-		fmt.Fprintf(tmpFile, "%s | %s | %d | %s\n", j.Name, j.ScheduleRaw, j.MaxRetries, j.Command)
+		fmt.Fprintf(tmpFile, "%s | %s | %d | %d | %s\n", j.Name, j.ScheduleRaw, j.MaxRetries, j.TimeoutSeconds, j.Command)
 	}
 	tmpFile.Close()
 
@@ -164,12 +165,13 @@ func runEdit(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		j := &job.Job{
-			Name:         e.name,
-			Command:      e.command,
-			ScheduleRaw:  e.scheduleRaw,
-			ScheduleCron: cronExpr,
-			MaxRetries:   e.retries,
-			NextRunAt:    &nextRun,
+			Name:           e.name,
+			Command:        e.command,
+			ScheduleRaw:    e.scheduleRaw,
+			ScheduleCron:   cronExpr,
+			MaxRetries:     e.retries,
+			TimeoutSeconds: e.timeout,
+			NextRunAt:      &nextRun,
 		}
 		if _, err := db.AddJob(database, j); err != nil {
 			return err
@@ -187,6 +189,7 @@ func runEdit(cmd *cobra.Command, args []string) error {
 		j.ScheduleRaw = e.scheduleRaw
 		j.ScheduleCron = cronExpr
 		j.MaxRetries = e.retries
+		j.TimeoutSeconds = e.timeout
 		j.NextRunAt = &nextRun
 		if err := db.UpdateJob(database, j); err != nil {
 			return err
@@ -208,6 +211,7 @@ type editedJob struct {
 	name        string
 	scheduleRaw string
 	retries     int
+	timeout     int
 	command     string
 }
 
@@ -228,14 +232,15 @@ func parseEditFile(path string) ([]editedJob, error) {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		parts := strings.SplitN(line, "|", 4)
-		if len(parts) != 4 {
-			return nil, fmt.Errorf("line %d: expected format 'name | schedule | retries | command', got: %q", lineNum, line)
+		parts := strings.SplitN(line, "|", 5)
+		if len(parts) != 5 {
+			return nil, fmt.Errorf("line %d: expected format 'name | schedule | retries | timeout | command', got: %q", lineNum, line)
 		}
 		name := strings.TrimSpace(parts[0])
 		scheduleRaw := strings.TrimSpace(parts[1])
 		retriesStr := strings.TrimSpace(parts[2])
-		command := strings.TrimSpace(parts[3])
+		timeoutStr := strings.TrimSpace(parts[3])
+		command := strings.TrimSpace(parts[4])
 
 		if name == "" || scheduleRaw == "" || command == "" {
 			return nil, fmt.Errorf("line %d: name, schedule, and command must not be empty", lineNum)
@@ -246,7 +251,12 @@ func parseEditFile(path string) ([]editedJob, error) {
 			return nil, fmt.Errorf("line %d: retries must be a number, got %q", lineNum, retriesStr)
 		}
 
-		jobs = append(jobs, editedJob{name, scheduleRaw, retries, command})
+		timeout, err := strconv.Atoi(timeoutStr)
+		if err != nil {
+			return nil, fmt.Errorf("line %d: timeout must be a number, got %q", lineNum, timeoutStr)
+		}
+
+		jobs = append(jobs, editedJob{name, scheduleRaw, retries, timeout, command})
 	}
 	return jobs, scanner.Err()
 }
