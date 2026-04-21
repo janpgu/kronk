@@ -22,12 +22,14 @@ var (
 	addName     string
 	addSchedule string
 	addRetries  int
+	addTimeout  int
 )
 
 func init() {
 	addCmd.Flags().StringVar(&addName, "name", "", "unique name for the job (required)")
 	addCmd.Flags().StringVar(&addSchedule, "schedule", "", "when to run, e.g. \"every night\" (required)")
 	addCmd.Flags().IntVar(&addRetries, "retries", 0, "number of times to retry on failure")
+	addCmd.Flags().IntVar(&addTimeout, "timeout", 0, "kill the job after this many seconds (0 = no timeout)")
 
 	_ = addCmd.MarkFlagRequired("name")
 	_ = addCmd.MarkFlagRequired("schedule")
@@ -57,12 +59,13 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	defer database.Close()
 
 	j := &job.Job{
-		Name:         addName,
-		Command:      command,
-		ScheduleRaw:  addSchedule,
-		ScheduleCron: cronExpr,
-		MaxRetries:   addRetries,
-		NextRunAt:    &nextRun,
+		Name:           addName,
+		Command:        command,
+		ScheduleRaw:    addSchedule,
+		ScheduleCron:   cronExpr,
+		MaxRetries:     addRetries,
+		TimeoutSeconds: addTimeout,
+		NextRunAt:      &nextRun,
 	}
 
 	if _, err := db.AddJob(database, j); err != nil {

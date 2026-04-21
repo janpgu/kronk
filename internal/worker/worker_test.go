@@ -2,6 +2,8 @@ package worker
 
 import (
 	"database/sql"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -157,6 +159,37 @@ func TestExecute_ConcurrencyGuard(t *testing.T) {
 	}
 	if len(runs) != 1 {
 		t.Errorf("Execute() created %d runs, want 1 (concurrency guard should skip)", len(runs))
+	}
+}
+
+func TestExecute_Timeout(t *testing.T) {
+	database := openTestDB(t)
+
+	sleepCmd := "sleep 5"
+	if runtime.GOOS == "windows" {
+		sleepCmd = "ping -n 6 127.0.0.1 > NUL"
+	}
+
+	j := sampleJob("slow", sleepCmd)
+	j.TimeoutSeconds = 1
+	j = addJob(t, database, j)
+
+	if err := Execute(database, j, false); err != nil {
+		t.Fatalf("Execute() unexpected error: %v", err)
+	}
+
+	runs, err := db.GetRunsForJob(database, j.ID, 1)
+	if err != nil {
+		t.Fatalf("GetRunsForJob() unexpected error: %v", err)
+	}
+	if len(runs) == 0 {
+		t.Fatal("GetRunsForJob() = 0 runs, want 1")
+	}
+	if runs[0].ExitCode == nil || *runs[0].ExitCode == 0 {
+		t.Errorf("run ExitCode = %v, want non-zero (timeout kill)", runs[0].ExitCode)
+	}
+	if !strings.Contains(runs[0].Stderr, "killed") {
+		t.Errorf("run Stderr = %q, want it to contain %q", runs[0].Stderr, "killed")
 	}
 }
 

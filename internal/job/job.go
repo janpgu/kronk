@@ -21,17 +21,18 @@ const (
 
 // Job represents a scheduled task stored in the jobs table.
 type Job struct {
-	ID          int64
-	Name        string
-	Command     string
-	ScheduleRaw string    // human-readable input, e.g. "every night"
-	ScheduleCron string   // resolved cron expression, e.g. "0 2 * * *"
-	MaxRetries  int
-	Status      Status
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	LastRunAt   *time.Time // nil if never run
-	NextRunAt   *time.Time // nil if not scheduled
+	ID             int64
+	Name           string
+	Command        string
+	ScheduleRaw    string    // human-readable input, e.g. "every night"
+	ScheduleCron   string    // resolved cron expression, e.g. "0 2 * * *"
+	MaxRetries     int
+	TimeoutSeconds int       // 0 means no timeout
+	Status         Status
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	LastRunAt      *time.Time // nil if never run
+	NextRunAt      *time.Time // nil if not scheduled
 }
 
 // Run represents a single execution of a job, stored in the runs table.

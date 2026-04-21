@@ -43,6 +43,12 @@ func runShow(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  %s  %s\n", label("Status:  "), ui.StatusStyle(string(j.Status)))
 	fmt.Printf("  %s  %d\n", label("Retries: "), j.MaxRetries)
 
+	if j.TimeoutSeconds > 0 {
+		fmt.Printf("  %s  %ds\n", label("Timeout: "), j.TimeoutSeconds)
+	} else {
+		fmt.Printf("  %s  %s\n", label("Timeout: "), ui.MutedStyle.Render("none"))
+	}
+
 	if j.NextRunAt != nil {
 		fmt.Printf("  %s  %s\n", label("Next Run:"), j.NextRunAt.Format("Mon 2 Jan 15:04"))
 	} else {

@@ -74,7 +74,7 @@ kronk trigger backup
 
 | Command | Description |
 |---|---|
-| `kronk add <cmd> --name <n> --schedule <s>` | Add a new job |
+| `kronk add <cmd> --name <n> --schedule <s> [--retries N] [--timeout N]` | Add a new job |
 | `kronk status` | Show all jobs and their next run time |
 | `kronk show <name>` | Show all details for a single job |
 | `kronk pause <name>` | Pause a job without removing it |
@@ -130,6 +130,16 @@ kronk add "python flaky.py" --name flaky --schedule "every hour" --retries 3
 ```
 
 On failure, kronk retries with exponential backoff: 2s, 4s, 8s after each attempt. After all retries are exhausted the job is marked `failed` and won't run again until you reset it with `kronk edit`.
+
+---
+
+## Timeouts
+
+```sh
+kronk add "python long_export.py" --name export --schedule "every night" --timeout 300
+```
+
+`--timeout` is in seconds. If the process is still running after that many seconds, kronk kills it and records the run as failed with `killed: exceeded timeout of Ns` in stderr. A timeout of `0` (the default) means no limit.
 
 ---
 
